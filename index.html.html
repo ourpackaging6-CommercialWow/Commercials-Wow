@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commercials Wow - Valuation & Market Notes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .active-stock {
+            border-color: #f59e0b !important; /* Gold Accent */
+            background-color: rgba(245, 158, 11, 0.1) !important;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* HIỆU ỨNG CHẠY GRADIENT CHO CHỮ SPORTLINE (TÍM <-> XANH LÁ) */
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .sportline-gradient-text {
+            background: linear-gradient(270deg, #c084fc, #4ade80, #c084fc);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 6s ease infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col relative">
+
+    <!-- NÚT ICON ZALO NỔI (FLOATING ZALO ICON) - LUÔN TRƯỢT THEO PAGE Ở GÓC DƯỚI BÊN PHẢI -->
+    <a href="https://zalo.me/0977079785" target="_blank" rel="noopener noreferrer" title="Liên hệ Zalo" class="fixed bottom-6 right-6 z-50 w-12 h-12 bg-blue-600 hover:bg-blue-500 text-white border-2 border-blue-400/60 rounded-full flex items-center justify-center transition shadow-2xl group animate-bounce hover:animate-none">
+        <i class="fa-solid fa-comment-dots text-xl text-white group-hover:scale-110 transition-transform"></i>
+    </a>
+
+    <!-- HEADER & NAVBAR -->
+    <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <!-- LOGO OUR -->
+                <div class="w-12 h-12 rounded-full border-2 border-amber-400 p-0.5 shadow-lg overflow-hidden flex-shrink-0 bg-slate-900">
+                    <img id="user-avatar" src="image_34353a.png" onerror="this.src='https://ui-avatars.com/api/?name=OUR&background=f59e0b&color=fff&bold=true'" alt="OUR Logo" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide text-amber-400">Commercials Wow</h1>
+                    <span class="text-[11px] text-amber-200/80 block -mt-1 font-semibold">Tác giả: Ông Patrick Trần</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- BANNER SPORTLINE - NỀN CŨ GỌN GÀNG, TƯƠNG PHẢN TỐT VỚI CHỮ -->
+    <section class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800 py-4 px-4 text-center relative overflow-hidden">
+        <div class="max-w-5xl mx-auto flex flex-col items-center justify-center gap-2 text-center">
+            <p class="text-base md:text-lg font-bold sportline-gradient-text tracking-wide leading-relaxed">
+                "Khối lượng hàng hóa tăng lên khi mức giá của một sản phẩm bị giảm xuống?"
+            </p>
+            <p class="text-base md:text-lg font-bold sportline-gradient-text tracking-wide leading-relaxed">
+                "Giá trị Doanh nghiệp / Cổ phiếu phụ thuộc vào giá trị bùng nổ năng lượng của chính nó."
+            </p>
+        </div>
+    </section>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- LEFT COLUMN: WATCHLIST, SIGNALS & TOP 10 NEWS -->
+        <div class="space-y-6">
+            
+            <!-- BẢNG ĐIỆN TIỀM NĂNG -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-lg">
+                <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                    <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-fire-flame-curved text-amber-400"></i> Bảng Điện Tiềm Năng (Watchlist)
+                    </h2>
+                    <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-mono">Top Click 3 Ngày</span>
+                </div>
+                
+                <div class="space-y-2 max-h-[680px] overflow-y-auto no-scrollbar" id="stock-list">
+                    <!-- Dynamic rendering top stocks -->
+                </div>
+            </div>
+
+            <!-- TÍN HIỆU REALTIME -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-lg">
+                <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
+                    <h2 class="font-bold text-slate-200 flex items-center gap-2 text-xs md:text-sm">
+                        <i class="fa-solid fa-bolt text-amber-400"></i> Biến Động & Tín Hiệu Realtime
+                    </h2>
+                    <a href="https://24hmoney.vn/phan-tich-ky-thuat?utm_medium=box_header2" target="_blank" rel="noopener noreferrer" class="text-[10px] font-mono bg-slate-900 text-amber-400 border border-slate-700 px-2 py-0.5 rounded hover:underline flex items-center gap-1">
+                        24hMoney <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+                    </a>
+                </div>
+
+                <div class="space-y-2.5 text-xs max-h-[480px] overflow-y-auto no-scrollbar" id="signals-24hmoney">
+                    <!-- Dynamic signals list -->
+                </div>
+            </div>
+
+            <!-- TOP 10 TIN TỨC REALTIME -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-lg">
+                <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
+                    <h2 class="font-bold text-slate-200 flex items-center gap-2 text-xs md:text-sm">
+                        <i class="fa-solid fa-newspaper text-amber-400"></i> Top 10 Tin Mới Realtime
+                    </h2>
+                    <span id="selected-news-tag" class="text-[10px] font-mono bg-slate-900 text-amber-400 border border-slate-700 px-2 py-0.5 rounded">PVS</span>
+                </div>
+
+                <div class="flex items-center justify-between mb-3 text-[10px] bg-slate-900/80 p-2 rounded border border-slate-800">
+                    <span class="text-slate-400 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live Feed
+                    </span>
+                    <button onclick="refreshCurrentStockNews()" class="text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-rotate text-[10px]"></i> Cập nhật
+                    </button>
+                </div>
+
+                <div class="max-h-[420px] overflow-y-auto no-scrollbar">
+                    <ul class="space-y-2 text-xs" id="news-feed">
+                        <!-- Dynamic top 10 news list -->
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: DYNAMIC NOTE & EMBEDDED CONTAINERS -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-lg">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                    <div>
+                        <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs px-2.5 py-0.5 rounded uppercase font-bold">Note Tiêu Điểm Đồng Bộ</span>
+                        <h2 id="note-title" class="text-xl font-bold text-slate-100 mt-1">--</h2>
+                    </div>
+                    <span id="note-date" class="text-xs text-slate-400">02/08/2026</span>
+                </div>
+
+                <!-- NOTE CONTENT -->
+                <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+                    <div class="bg-slate-900/80 border-l-4 border-amber-500 p-3 rounded text-xs text-slate-300" id="note-sportline-box">
+                        <strong>Góc nhìn Sportline:</strong> --
+                    </div>
+
+                    <h3 class="font-bold text-amber-400 text-base">1. Định giá & Biên an toàn (Margin of Safety)</h3>
+                    <p id="note-valuation">--</p>
+
+                    <h3 class="font-bold text-amber-400 text-base">2. Phân tích Kỹ thuật (Technical Check)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 my-3">
+                        <div class="bg-slate-900 p-3 rounded border border-slate-800 text-center">
+                            <span class="text-xs text-slate-400 block mb-1">RSI (14)</span>
+                            <span id="note-rsi" class="text-base font-bold">--</span>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded border border-slate-800 text-center">
+                            <span class="text-xs text-slate-400 block mb-1">MACD</span>
+                            <span id="note-macd" class="text-base font-bold">--</span>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded border border-slate-800 text-center">
+                            <span class="text-xs text-slate-400 block mb-1">Price Action</span>
+                            <span id="note-pa" class="text-base font-bold">--</span>
+                        </div>
+                    </div>
+
+                    <h3 class="font-bold text-amber-400 text-base">3. Hành động đề xuất & Catalysts</h3>
+                    <p id="note-action">--</p>
+
+                    <!-- SECTION 4: REALTIME FIREANT VIEW CONTAINER -->
+                    <h3 class="font-bold text-amber-400 text-base pt-3 border-t border-slate-800 flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-amber-500"></i> 4. Dữ liệu & Biểu đồ Realtime (FireAnt)
+                        </span>
+                        <a id="fireant-direct-link" href="#" target="_blank" class="text-xs font-mono bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded hover:underline">
+                            Mở FireAnt <i class="fa-solid fa-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </h3>
+                    
+                    <div class="w-full h-[580px] bg-slate-900 rounded-lg overflow-hidden border border-slate-800 relative">
+                        <iframe id="fireant-iframe" class="w-full h-full border-0 bg-white rounded-lg" src="about:blank" allowfullscreen></iframe>
+                    </div>
+
+                    <!-- SECTION 5: 24HMONEY NEWS & MARKET FEED -->
+                    <h3 class="font-bold text-amber-400 text-base pt-3 border-t border-slate-800 flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-newspaper text-amber-500"></i> 5. Bài viết & Tin tức Thị trường (24hMoney)
+                        </span>
+                        <a href="https://24hmoney.vn/" target="_blank" class="text-xs font-mono bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded hover:underline">
+                            Truy cập 24hMoney.vn <i class="fa-solid fa-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </h3>
+                    <div class="w-full h-[500px] bg-slate-900 rounded-lg overflow-hidden border border-slate-800 relative">
+                        <iframe id="money24h-home-iframe" class="w-full h-full border-0 bg-white rounded-lg" src="https://24hmoney.vn/" allowfullscreen></iframe>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- FOOTER ĐÃ CÂN CHỈNH ĐỒNG BỘ CHIỀU RỘNG MAX-W-7XL -->
+    <footer class="border-t border-slate-800 bg-slate-950 py-6 text-center text-xs text-slate-500 space-y-3">
+        <div class="max-w-7xl mx-auto px-4 space-y-3">
+            <p>© 2026 Commercials Wow. Tác giả: Ông Patrick Trần.</p>
+            <p class="text-[11px] text-slate-600">
+                Trang tổng hợp hỗ trợ phân tích cá nhân. Bản quyền dữ liệu biểu đồ và tin tức thuộc về FireAnt.vn & 24hMoney.vn.
+            </p>
+
+            <!-- KHỐI MIỄN TRỪ TRÁCH NHIỆM -->
+            <div class="bg-slate-900/60 border border-slate-800/80 p-4 rounded-xl text-xs text-slate-400 space-y-2 text-left w-full shadow-inner">
+                <div class="flex items-center gap-2 text-amber-400 font-bold">
+                    <i class="fa-solid fa-shield-halved text-sm"></i>
+                    <span class="text-sm">Tuyên bố Miễn trừ Trách nhiệm & Nguồn Dữ liệu</span>
+                </div>
+                <div class="space-y-1.5 leading-relaxed text-[11px] text-slate-300">
+                    <p>• Trang web này là công cụ tổng hợp và theo dõi cá nhân do <strong>Tác giả: Ông Patrick Trần</strong> vận hành.</p>
+                    <p>• Các khung dữ liệu, biểu đồ kỹ thuật và bài viết tin tức tại Mục 4 & Mục 5 được hiển thị bằng phương thức nhúng giao diện từ nền tảng gốc <strong class="text-slate-200">FireAnt.vn</strong> và <strong class="text-slate-200">24hMoney.vn</strong>. Toàn bộ bản quyền thương hiệu, dữ liệu thị trường và nội dung gốc thuộc về các đơn vị chủ quản tương ứng.</p>
+                    <p>• Mọi nhận định cá nhân tại đây chỉ mang tính chất tham khảo, không phải là lời khuyên hay khuyến nghị đầu tư tài chính.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let currentSelectedSymbol = 'PVS';
+
+        const allStockDatabase = [
+            { symbol: 'PVS', name: 'Dịch vụ Kỹ thuật Dầu khí', price: '38.50', change: '+2.39%', pe: '15.2', pb: '1.4', margin: '+25%', clicks3Days: 450 },
+            { symbol: 'PVD', name: 'Khoan và Dịch vụ Khoan Dầu khí', price: '26.80', change: '+1.52%', pe: '14.8', pb: '1.2', margin: '+28%', clicks3Days: 420 },
+            { symbol: 'GAS', name: 'Tổng Công ty Khí Việt Nam', price: '78.20', change: '+0.51%', pe: '13.9', pb: '1.9', margin: '+20%', clicks3Days: 390 },
+            { symbol: 'REE', name: 'Cơ Điện Lạnh', price: '66.00', change: '+1.07%', pe: '11.5', pb: '1.5', margin: '+22%', clicks3Days: 360 },
+            { symbol: 'PC1', name: 'Tập đoàn PC1', price: '27.40', change: '+3.01%', pe: '16.2', pb: '1.3', margin: '+30%', clicks3Days: 340 },
+            { symbol: 'ACV', name: 'Tổng Công ty Cảng Hàng không', price: '112.50', change: '-0.44%', pe: '24.5', pb: '3.1', margin: '+18%', clicks3Days: 310 },
+            { symbol: 'PDR', name: 'Bất động sản Phát Đạt', price: '22.10', change: '+1.84%', pe: '16.8', pb: '1.4', margin: '+27%', clicks3Days: 295 },
+            { symbol: 'ANV', name: 'Thủy sản Nam Việt', price: '24.20', change: '-0.82%', pe: '12.4', pb: '1.1', margin: '+24%', clicks3Days: 275 },
+            { symbol: 'PVC', name: 'Hóa chất và Dung dịch Khoan', price: '15.60', change: '+2.63%', pe: '13.1', pb: '1.0', margin: '+32%', clicks3Days: 250 },
+            { symbol: 'HAG', name: 'Hoàng Anh Gia Lai', price: '12.80', change: '+4.07%', pe: '10.8', pb: '1.2', margin: '+35%', clicks3Days: 235 },
+            { symbol: 'PET', name: 'Tổng CTCP Dịch vụ Tổng hợp Dầu khí', price: '28.10', change: '+0.72%', pe: '15.0', pb: '1.4', margin: '+21%', clicks3Days: 210 },
+            { symbol: 'SBT', name: 'Thành Thành Công - Biên Hòa', price: '13.40', change: '-0.37%', pe: '18.5', pb: '1.0', margin: '+19%', clicks3Days: 190 },
+            { symbol: 'VTP', name: 'Viettel Post', price: '72.50', change: '+2.11%', pe: '28.2', pb: '4.2', margin: '+26%', clicks3Days: 180 },
+            { symbol: 'VPB', name: 'Ngân hàng Việt Nam Thịnh Vượng', price: '19.40', change: '+1.04%', pe: '11.2', pb: '1.2', margin: '+20%', clicks3Days: 170 },
+            { symbol: 'MWG', name: 'Thế Giới Di Động', price: '52.10', change: '-3.90%', pe: '18.2', pb: '2.1', margin: '+22%', clicks3Days: 165 },
+            { symbol: 'GEX', name: 'Tập đoàn GELEX', price: '22.50', change: '+2.27%', pe: '15.4', pb: '1.4', margin: '+25%', clicks3Days: 160 },
+            { symbol: 'MSB', name: 'Ngân hàng Hàng Hải', price: '13.20', change: '-0.75%', pe: '9.8', pb: '1.0', margin: '+18%', clicks3Days: 155 },
+            { symbol: 'AGG', name: 'Bất động sản An Gia', price: '16.80', change: '+0.00%', pe: '12.5', pb: '1.1', margin: '+28%', clicks3Days: 150 },
+            { symbol: 'SSB', name: 'Ngân hàng Đông Nam Á', price: '18.90', change: '+1.61%', pe: '16.1', pb: '1.6', margin: '+19%', clicks3Days: 145 },
+            { symbol: 'OCB', name: 'Ngân hàng Phương Đông', price: '14.50', change: '-0.34%', pe: '10.2', pb: '1.1', margin: '+21%', clicks3Days: 140 },
+            { symbol: 'NVL', name: 'Novaland', price: '11.10', change: '+3.24%', pe: '22.0', pb: '0.8', margin: '+35%', clicks3Days: 135 },
+            { symbol: 'VND', name: 'Chứng khoán VNDirect', price: '14.80', change: '-1.34%', pe: '14.2', pb: '1.2', margin: '+26%', clicks3Days: 130 },
+            { symbol: 'VIB', name: 'Ngân hàng Quốc tế', price: '20.20', change: '+0.49%', pe: '11.5', pb: '1.7', margin: '+17%', clicks3Days: 125 }
+        ];
+
+        const signals24hMoneyData = [
+            { symbol: 'PVS', type: 'Bùng nổ năng lượng', desc: 'Dòng tiền lớn xác nhận vượt đỉnh ngắn hạn, khối lượng giao dịch tăng gấp đôi trung bình 20 phiên.', color: 'text-emerald-400', border: 'border-emerald-500/30' },
+            { symbol: 'PVD', type: 'Thu hút dòng tiền', desc: 'Hợp đồng giàn khoan mới hỗ trợ đà tăng giá mạnh mẽ tại vùng hỗ trợ kỹ thuật.', color: 'text-emerald-400', border: 'border-emerald-500/30' },
+            { symbol: 'PC1', type: 'Đột phá hạ tầng', desc: 'Hưởng ứng tích cực từ nhóm cổ phiếu năng lượng tái tạo và xây lắp điện.', color: 'text-purple-400', border: 'border-purple-500/30' },
+            { symbol: 'HAG', type: 'Đầu cơ mạnh', desc: 'Lực cầu chủ động đẩy giá tăng mạnh kèm thanh khoản cao vượt trội.', color: 'text-sky-400', border: 'border-sky-500/30' },
+            { symbol: 'REE', type: 'Tích lũy bền vững', desc: 'Biên độ dao động thu hẹp, chuẩn bị cho nhịp bứt phá nền giá trung hạn.', color: 'text-amber-300', border: 'border-amber-500/30' },
+            { symbol: 'ACV', type: 'Duy trì nền', desc: 'Tăng trưởng lưu lượng hành khách quốc tế củng cố triển vọng cơ bản.', color: 'text-emerald-400', border: 'border-emerald-500/30' },
+            { symbol: 'VTP', type: 'Xu hướng tăng', desc: 'Động lực từ thương mại điện tử giúp duy trì đà tăng trưởng tích cực.', color: 'text-purple-400', border: 'border-purple-500/30' },
+            { symbol: 'GAS', type: 'Test kháng cự', desc: 'Dòng tiền duy trì ổn định, giữ nhịp tích cực cho nhóm cổ phiếu trụ.', color: 'text-sky-400', border: 'border-sky-500/30' }
+        ];
+
+        const stockDetailsMap = {
+            'PVS': {
+                fireantUrl: 'https://fireant.vn/ma-chung-khoan/PVS',
+                title: 'Đánh giá PVS: Sóng hạ tầng Dầu khí & Năng lượng tái tạo ngoài khơi',
+                sportline: 'Khối lượng hàng hóa tăng lên khi giá điều chỉnh; Giá trị doanh nghiệp bùng nổ năng lượng cốt lõi.',
+                valuation: 'Vùng giá 38.50 phản ánh kỳ vọng trúng thầu các dự án lớn với biên an toàn +25%.',
+                rsi: '64.2 (Đà tăng khỏe)', rsiColor: 'text-emerald-400',
+                macd: 'Cắt lên mạnh mẽ trên đường Signal', macdColor: 'text-emerald-400',
+                pa: 'Breakout thành công khỏi mô hình nền tích lũy', paColor: 'text-emerald-400',
+                action: 'Nắm giữ vị thế, gia tăng tỷ trọng khi có nhịp retest nhẹ.'
+            },
+            'PVD': {
+                fireantUrl: 'https://fireant.vn/ma-chung-khoan/PVD',
+                title: 'Đánh giá PVD: Động lực từ đơn giá cho thuê giàn khoan quốc tế',
+                sportline: 'Hiệu suất khai thác giàn khoan tối đa tối ưu hóa giá trị doanh nghiệp.',
+                valuation: 'Định giá hấp dẫn tại 26.80 với biên an toàn +28%.',
+                rsi: '59.5 (Tích cực)', rsiColor: 'text-emerald-400',
+                macd: 'Phân kỳ dương hướng lên', macdColor: 'text-amber-400',
+                pa: 'Thoát khỏi kênh giá giảm ngắn hạn', paColor: 'text-emerald-400',
+                action: 'Canh mua tích lũy khi giá duy trì trên ngưỡng hỗ trợ.'
+            },
+            'PC1': {
+                fireantUrl: 'https://fireant.vn/ma-chung-khoan/PC1',
+                title: 'Đánh giá PC1: Hưởng lợi từ đầu tư công và năng lượng tái tạo',
+                sportline: 'Sự bùng nổ hạ tầng năng lượng lưới điện quốc gia.',
+                valuation: 'Biên an toàn tốt tại vùng giá 27.40.',
+                rsi: '61.8 (Tăng trưởng tốt)', rsiColor: 'text-emerald-400',
+                macd: 'Đường MACD nằm trên đường tín hiệu', macdColor: 'text-emerald-400',
+                pa: 'Mô hình tiếp diễn xu hướng tăng mạnh', paColor: 'text-emerald-400',
+                action: 'Duy trì nắm giữ và mở rộng vị thế theo đà tăng.'
+            }
+        };
+
+        function getTop10ClickedStocks() {
+            return [...allStockDatabase]
+                .sort((a, b) => b.clicks3Days - a.clicks3Days)
+                .slice(0, 10);
+        }
+
+        function renderStockCards() {
+            const listEl = document.getElementById('stock-list');
+            const top10 = getTop10ClickedStocks();
+
+            listEl.innerHTML = top10.map((s, idx) => {
+                const isPositive = !s.change.startsWith('-');
+                const changeColor = isPositive ? 'text-emerald-400' : 'text-rose-400';
+                const rankBadge = idx < 3 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800';
+
+                return `
+                    <div id="card-${s.symbol}" onclick="handleClickStock('${s.symbol}')" class="stock-card bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 p-2.5 rounded-lg transition cursor-pointer">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-mono px-1.5 py-0.2 rounded border ${rankBadge}">#${idx + 1}</span>
+                                <div>
+                                    <span class="text-sm font-black text-amber-400">${s.symbol}</span>
+                                    <span class="text-[10px] text-slate-400 block">${s.name}</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-sm font-bold ${changeColor}">${s.price}</span>
+                                <span class="text-[10px] ${changeColor} block">${s.change}</span>
+                            </div>
+                        </div>
+                        <div class="mt-1.5 text-[9px] text-slate-400 flex justify-between border-t border-slate-800/80 pt-1">
+                            <span>Lượt click 3 ngày: <strong class="text-amber-300">${s.clicks3Days}</strong></span>
+                            <span class="text-emerald-400 font-medium">Margin: ${s.margin}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handleClickStock(symbol) {
+            const stock = allStockDatabase.find(item => item.symbol === symbol);
+            if (stock) stock.clicks3Days += 1;
+            
+            renderStockCards();
+            selectStock(symbol);
+        }
+
+        function render24hMoneySignals() {
+            const container = document.getElementById('signals-24hmoney');
+            container.innerHTML = signals24hMoneyData.map(item => `
+                <div class="bg-slate-900/90 border ${item.border} p-2.5 rounded-lg flex flex-col gap-1 cursor-pointer hover:bg-slate-900 transition" onclick="handleClickStock('${item.symbol}')">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-amber-400">${item.symbol}</span>
+                        <span class="text-[10px] font-semibold ${item.color} uppercase px-1.5 py-0.2 bg-slate-950 rounded border border-slate-800">${item.type}</span>
+                    </div>
+                    <p class="text-[11px] text-slate-300 leading-snug">${item.desc}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderTop10NewsForStock(symbol) {
+            const container = document.getElementById('news-feed');
+            document.getElementById('selected-news-tag').innerText = symbol;
+
+            const newsList = Array.from({ length: 10 }, (_, i) => ({
+                text: `Cập nhật realtime tin tức mới nhất [Bài ${i + 1}] liên quan đến triển vọng mã ${symbol}.`,
+                source: i % 2 === 0 ? '24hMoney' : 'FireAnt',
+                link: `https://24hmoney.vn/phan-tich-ky-thuat?utm_medium=box_header2`,
+                time: `${(i + 1) * 6} phút trước`
+            }));
+
+            container.innerHTML = newsList.map((item, idx) => `
+                <li class="bg-slate-900/60 border border-slate-800 hover:border-amber-500/40 p-2 rounded-lg transition">
+                    <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="hover:text-amber-300 transition block text-[11px] leading-snug font-medium text-slate-200">
+                        <span class="text-amber-400 font-bold">[${idx + 1}]</span> ${item.text}
+                    </a>
+                    <div class="flex justify-between items-center text-slate-500 text-[9px] mt-1 pt-1 border-t border-slate-800/50">
+                        <span class="text-amber-400/80 font-mono"><i class="fa-solid fa-link text-[8px]"></i> ${item.source}</span>
+                        <span class="text-slate-400 font-mono"><i class="fa-regular fa-clock text-[8px]"></i> ${item.time}</span>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function selectStock(symbol) {
+            currentSelectedSymbol = symbol;
+            document.querySelectorAll('.stock-card').forEach(card => card.classList.remove('active-stock'));
+            const selectedCard = document.getElementById(`card-${symbol}`);
+            if(selectedCard) selectedCard.classList.add('active-stock');
+
+            const details = stockDetailsMap[symbol] || {
+                fireantUrl: `https://fireant.vn/ma-chung-khoan/${symbol}`,
+                title: `Đánh giá chi tiết mã ${symbol}`,
+                sportline: 'Khối lượng hàng hóa tăng lên khi mức giá của một sản phẩm bị giảm xuống.',
+                valuation: `Vùng giá hiện tại của ${symbol} mở ra cơ hội theo dõi tích lũy dài hạn.`,
+                rsi: '55.0 (Tích cực)', rsiColor: 'text-amber-400',
+                macd: 'Đang duy trì đà tăng', macdColor: 'text-emerald-400',
+                pa: 'Theo dõi phản ứng tại mốc kháng cự/hỗ trợ gần nhất', paColor: 'text-emerald-400',
+                action: 'Quan sát dòng tiền xác nhận trước khi gia tăng vị thế.'
+            };
+
+            document.getElementById('note-title').innerText = details.title;
+            document.getElementById('note-sportline-box').innerHTML = `<strong>Góc nhìn Sportline:</strong> ${details.sportline}`;
+            document.getElementById('note-valuation').innerText = details.valuation;
+            
+            const rsiEl = document.getElementById('note-rsi');
+            rsiEl.innerText = details.rsi;
+            rsiEl.className = `text-base font-bold ${details.rsiColor}`;
+
+            const macdEl = document.getElementById('note-macd');
+            macdEl.innerText = details.macd;
+            macdEl.className = `text-base font-bold ${details.macdColor}`;
+
+            const paEl = document.getElementById('note-pa');
+            paEl.innerText = details.pa;
+            paEl.className = `text-base font-bold ${details.paColor}`;
+
+            document.getElementById('note-action').innerText = details.action;
+
+            document.getElementById('fireant-iframe').src = details.fireantUrl;
+            const btnLink = document.getElementById('fireant-direct-link');
+            btnLink.href = details.fireantUrl;
+            btnLink.innerHTML = `Mở FireAnt ${symbol} <i class="fa-solid fa-up-right-from-square text-[10px]"></i>`;
+
+            renderTop10NewsForStock(symbol);
+        }
+
+        function refreshCurrentStockNews() {
+            renderTop10NewsForStock(currentSelectedSymbol);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderStockCards();
+            render24hMoneySignals();
+            selectStock('PVS');
+        });
+    </script>
+</body>
+</html>
