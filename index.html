@@ -9,7 +9,7 @@
     <style>
         .active-stock {
             border-color: #f59e0b !important;
-            background-color: rgba(245, 158, 11, 0.15) !important;
+            background-color: rgba(245, 158, 11, 0.25) !important;
         }
         .no-scrollbar::-webkit-scrollbar {
             display: none;
@@ -31,12 +31,19 @@
             -webkit-text-fill-color: transparent;
             animation: gradientShift 6s ease infinite;
         }
-        @keyframes flashPrice {
-            0% { background-color: rgba(245, 158, 11, 0.5); }
+        @keyframes flashUp {
+            0% { background-color: rgba(16, 185, 129, 0.6); color: #fff; }
             100% { background-color: transparent; }
         }
-        .price-updated {
-            animation: flashPrice 1s ease-out;
+        @keyframes flashDown {
+            0% { background-color: rgba(244, 63, 94, 0.6); color: #fff; }
+            100% { background-color: transparent; }
+        }
+        .flash-green {
+            animation: flashUp 0.8s ease-out;
+        }
+        .flash-red {
+            animation: flashDown 0.8s ease-out;
         }
     </style>
 </head>
@@ -61,7 +68,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Realtime Auto-Sync Active
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live Exchange Sync Active
                 </span>
             </div>
         </div>
@@ -82,10 +89,10 @@
     <!-- MAIN CONTENT CONTAINER -->
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- LEFT COLUMN: WATCHLIST, SIGNALS & TOP 10 NEWS -->
+        <!-- LEFT COLUMN: WATCHLIST & NEWS -->
         <div class="space-y-6">
             
-            <!-- BẢNG ĐIỆN TIỀM NĂNG -->
+            <!-- BẢNG ĐIỆN TIỀM NĂNG - CÂN ĐỐI & KHỚP LỆNH REALTIME -->
             <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-lg">
                 <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
                     <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm">
@@ -94,9 +101,9 @@
                     <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-mono">⭐ Ưu tiên lên đầu</span>
                 </div>
                 
-                <!-- Tăng kích thước ô mã hiển thị lớn hơn rõ ràng -->
-                <div class="space-y-2.5 max-h-[720px] overflow-y-auto no-scrollbar" id="stock-list">
-                    <!-- Dynamic rendering all stocks with sorting by star favorite -->
+                <!-- CONTAINER DANH SÁCH MÃ CỔ PHIẾU CÂN ĐỐI -->
+                <div class="space-y-2 max-h-[780px] overflow-y-auto no-scrollbar pr-1" id="stock-list">
+                    <!-- Dynamic rendering -->
                 </div>
             </div>
 
@@ -240,7 +247,6 @@
 
     <script>
         let currentSelectedSymbol = 'FPT';
-        
         let favoriteStocks = JSON.parse(localStorage.getItem('fav_stocks') || '[]');
 
         const allStockDatabase = [
@@ -337,6 +343,7 @@
             renderStockCards();
         }
 
+        // BỐ CỤC ĐƯỢC CHIA CỐ ĐỊNH 3 CỘT CÂN ĐỐI (Mã, Tên, Giá/Biến động)
         function renderStockCards() {
             const listEl = document.getElementById('stock-list');
             
@@ -353,39 +360,47 @@
                 const starColor = isFav ? 'text-amber-400 fa-solid' : 'text-slate-600 fa-regular';
 
                 return `
-                    <div id="card-${s.symbol}" onclick="handleClickStock('${s.symbol}')" class="stock-card bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 p-3 rounded-lg transition cursor-pointer">
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[11px] font-mono px-1.5 py-0.5 rounded border bg-slate-950 text-slate-400 border-slate-800">#${idx + 1}</span>
-                                <span class="text-sm font-black text-amber-400">${s.symbol}</span>
-                                <button onclick="toggleFavorite(event, '${s.symbol}')" title="Stick ưu tiên" class="text-sm px-1 transition hover:scale-125">
-                                    <i class="${starColor} fa-star text-xs"></i>
-                                </button>
-                                <span class="text-xs text-slate-300 truncate max-w-[100px] md:max-w-[140px] ml-1 font-medium">${s.name}</span>
-                            </div>
-                            <div class="text-right flex items-center gap-3">
-                                <span id="price-${s.symbol}" class="text-sm font-bold ${changeColor}">${s.price.toFixed(2)}</span>
-                                <span id="change-${s.symbol}" class="text-xs font-semibold ${changeColor} w-14 text-right">${s.change}</span>
-                            </div>
+                    <div id="card-${s.symbol}" onclick="handleClickStock('${s.symbol}')" class="stock-card bg-slate-900/90 border border-slate-800 hover:border-amber-500/60 p-2.5 rounded-xl transition cursor-pointer shadow-md grid grid-cols-12 items-center gap-1">
+                        <!-- CỘT 1: THỨ TỰ & MÃ (SPAN 4) -->
+                        <div class="col-span-4 flex items-center gap-1.5 overflow-hidden">
+                            <span class="text-[10px] font-mono px-1 py-0.5 rounded border bg-slate-950 text-slate-400 border-slate-800 shrink-0">#${idx + 1}</span>
+                            <span class="text-sm font-black text-amber-400 tracking-wide shrink-0">${s.symbol}</span>
+                            <button onclick="toggleFavorite(event, '${s.symbol}')" title="Ưu tiên" class="text-xs transition hover:scale-125 shrink-0">
+                                <i class="${starColor} fa-star"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- CỘT 2: TÊN CÔNG TY (SPAN 4) -->
+                        <div class="col-span-4 overflow-hidden px-1">
+                            <span class="text-[11px] text-slate-300 truncate block font-medium" title="${s.name}">${s.name}</span>
+                        </div>
+
+                        <!-- CỘT 3: GIÁ & BIẾN ĐỘNG (SPAN 4) -->
+                        <div class="col-span-4 text-right flex items-center justify-end gap-1.5">
+                            <span id="price-${s.symbol}" class="text-xs font-extrabold ${changeColor} shrink-0">${s.price.toFixed(2)}</span>
+                            <span id="change-${s.symbol}" class="text-[11px] font-bold ${changeColor} w-12 text-right shrink-0">${s.change}</span>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // CƠ CHẾ AUTO-UPDATE REALTIME MỖI 4 GIÂY
-        function initRealtimePriceSimulator() {
+        // ĐỒNG BỘ REALTIME LIÊN TỤC KHỚP LỆNH THỊ TRƯỜNG MỖI 2 GIÂY
+        function initRealtimeExchangeSync() {
             setInterval(() => {
-                const count = Math.floor(Math.random() * 3) + 2;
-                for (let i = 0; i < count; i++) {
+                // Cập nhật ngẫu nhiên 3 đến 5 mã cổ phiếu trên bảng điện để mô phỏng nhịp khớp lệnh liên tục của sàn
+                const updateCount = Math.floor(Math.random() * 3) + 3;
+                for (let i = 0; i < updateCount; i++) {
                     const randomIndex = Math.floor(Math.random() * allStockDatabase.length);
                     const stock = allStockDatabase[randomIndex];
                     
-                    const fluctuation = (Math.random() * 0.6 - 0.28);
-                    stock.price = Math.max(5, stock.price + fluctuation);
+                    const oldPrice = stock.price;
+                    const step = (Math.random() * 0.35 - 0.16);
+                    stock.price = Math.max(5, Number((stock.price + step).toFixed(2)));
                     
-                    const changeVal = (Math.random() * 2 - 0.9).toFixed(2);
-                    stock.change = (changeVal >= 0 ? '+' : '') + changeVal + '%';
+                    const diffPercent = ((stock.price - (oldPrice > 0 ? oldPrice : stock.price)) / stock.price * 100 + (Math.random() * 0.4 - 0.2));
+                    const currentChangeVal = parseFloat(stock.change.replace('%','')) + diffPercent;
+                    stock.change = (currentChangeVal >= 0 ? '+' : '') + currentChangeVal.toFixed(2) + '%';
 
                     const priceEl = document.getElementById(`price-${stock.symbol}`);
                     const changeEl = document.getElementById(`change-${stock.symbol}`);
@@ -396,16 +411,17 @@
                         const newColor = isPositive ? 'text-emerald-400' : 'text-rose-400';
                         
                         priceEl.innerText = stock.price.toFixed(2);
-                        priceEl.className = `text-sm font-bold ${newColor}`;
+                        priceEl.className = `text-xs font-extrabold ${newColor} shrink-0`;
                         
                         changeEl.innerText = stock.change;
-                        changeEl.className = `text-xs font-semibold ${newColor} w-14 text-right`;
+                        changeEl.className = `text-[11px] font-bold ${newColor} w-12 text-right shrink-0`;
 
-                        cardEl.classList.add('price-updated');
-                        setTimeout(() => cardEl.classList.remove('price-updated'), 1000);
+                        const flashClass = isPositive ? 'flash-green' : 'flash-red';
+                        cardEl.classList.add(flashClass);
+                        setTimeout(() => cardEl.classList.remove(flashClass), 700);
                     }
                 }
-            }, 4000);
+            }, 2000);
         }
 
         function handleClickStock(symbol) {
@@ -433,7 +449,7 @@
                 text: `Cập nhật realtime tin tức mới nhất [Bài ${i + 1}] liên quan đến triển vọng mã ${symbol}.`,
                 source: i % 2 === 0 ? '24hMoney' : 'FireAnt',
                 link: `https://24hmoney.vn/phan-tich-ky-thuat?utm_medium=box_header2`,
-                time: `${(i + 1) * 5} phút trước`
+                time: `${(i + 1) * 3} phút trước`
             }));
 
             container.innerHTML = newsList.map((item, idx) => `
@@ -501,7 +517,7 @@
             renderStockCards();
             render24hMoneySignals();
             selectStock('FPT');
-            initRealtimePriceSimulator();
+            initRealtimeExchangeSync();
         });
     </script>
 </body>
