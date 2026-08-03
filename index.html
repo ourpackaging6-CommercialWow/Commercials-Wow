@@ -8,10 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .active-stock {
-            border-color: #f59e0b !important; /* Gold Accent */
-            background-color: rgba(245, 158, 11, 0.1) !important;
+            border-color: #f59e0b !important;
+            background-color: rgba(245, 158, 11, 0.15) !important;
         }
-
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -19,13 +18,11 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
         .sportline-gradient-text {
             background: linear-gradient(270deg, #c084fc, #4ade80, #c084fc);
             background-size: 200% auto;
@@ -33,6 +30,13 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: gradientShift 6s ease infinite;
+        }
+        @keyframes flashPrice {
+            0% { background-color: rgba(245, 158, 11, 0.5); }
+            100% { background-color: transparent; }
+        }
+        .price-updated {
+            animation: flashPrice 1s ease-out;
         }
     </style>
 </head>
@@ -54,6 +58,11 @@
                     <h1 class="text-xl font-bold tracking-wide text-amber-400">Commercials Wow</h1>
                     <span class="text-[11px] text-amber-200/80 block -mt-1 font-semibold">Tác giả: Ông Patrick Trần</span>
                 </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Realtime Auto-Sync Active
+                </span>
             </div>
         </div>
     </header>
@@ -78,15 +87,16 @@
             
             <!-- BẢNG ĐIỆN TIỀM NĂNG -->
             <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-lg">
-                <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
                     <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm">
                         <i class="fa-solid fa-fire-flame-curved text-amber-400"></i> Bảng Điện Tiềm Năng (Watchlist)
                     </h2>
-                    <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-mono">Top Click 3 Ngày</span>
+                    <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-mono">⭐ Ưu tiên lên đầu</span>
                 </div>
                 
-                <div class="space-y-2 max-h-[680px] overflow-y-auto no-scrollbar" id="stock-list">
-                    <!-- Dynamic rendering top stocks -->
+                <!-- Tăng kích thước ô mã hiển thị lớn hơn rõ ràng -->
+                <div class="space-y-2.5 max-h-[720px] overflow-y-auto no-scrollbar" id="stock-list">
+                    <!-- Dynamic rendering all stocks with sorting by star favorite -->
                 </div>
             </div>
 
@@ -112,12 +122,12 @@
                     <h2 class="font-bold text-slate-200 flex items-center gap-2 text-xs md:text-sm">
                         <i class="fa-solid fa-newspaper text-amber-400"></i> Top 10 Tin Mới Realtime
                     </h2>
-                    <span id="selected-news-tag" class="text-[10px] font-mono bg-slate-900 text-amber-400 border border-slate-700 px-2 py-0.5 rounded">PVS</span>
+                    <span id="selected-news-tag" class="text-[10px] font-mono bg-slate-900 text-amber-400 border border-slate-700 px-2 py-0.5 rounded">FPT</span>
                 </div>
 
                 <div class="flex items-center justify-between mb-3 text-[10px] bg-slate-900/80 p-2 rounded border border-slate-800">
                     <span class="text-slate-400 flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live Feed
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live Feed Active
                     </span>
                     <button onclick="refreshCurrentStockNews()" class="text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1">
                         <i class="fa-solid fa-rotate text-[10px]"></i> Cập nhật
@@ -142,7 +152,7 @@
                         <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs px-2.5 py-0.5 rounded uppercase font-bold">Note Tiêu Điểm Đồng Bộ</span>
                         <h2 id="note-title" class="text-xl font-bold text-slate-100 mt-1">--</h2>
                     </div>
-                    <span id="note-date" class="text-xs text-slate-400">02/08/2026</span>
+                    <span id="note-date" class="text-xs text-slate-400">03/08/2026</span>
                 </div>
 
                 <!-- NOTE CONTENT -->
@@ -229,143 +239,176 @@
     </footer>
 
     <script>
-        let currentSelectedSymbol = 'PVS';
+        let currentSelectedSymbol = 'FPT';
+        
+        let favoriteStocks = JSON.parse(localStorage.getItem('fav_stocks') || '[]');
 
-        // ĐÃ CẬP NHẬT CHÍNH XÁC THEO BẢNG ĐIỆN REALTIME (PVC, DCM, DPM, REE, PVT, PVS, PVD, PDR, ANV, VHC,...)
         const allStockDatabase = [
-            { symbol: 'PVS', name: 'Dịch vụ Kỹ thuật Dầu khí', price: '34.10', change: '-2.01%', pe: '9.2', pb: '1.1', margin: '+25%', clicks3Days: 450 },
-            { symbol: 'PVD', name: 'Khoan và Dịch vụ Khoan Dầu khí', price: '18.15', change: '-3.97%', pe: '14.2', pb: '0.6', margin: '+28%', clicks3Days: 420 },
-            { symbol: 'PVC', name: 'Hóa chất và Dung dịch Khoan', price: '11.80', change: '-2.48%', pe: '35.8', pb: '0.9', margin: '+32%', clicks3Days: 380 },
-            { symbol: 'ANV', name: 'Thủy sản Nam Việt', price: '17.05', change: '-3.13%', pe: '12.4', pb: '1.1', margin: '+24%', clicks3Days: 375 },
-            { symbol: 'PDR', name: 'Bất động sản Phát Đạt', price: '11.45', change: '-3.38%', pe: '16.8', pb: '1.4', margin: '+27%', clicks3Days: 365 },
-            { symbol: 'REE', name: 'Cơ Điện Lạnh', price: '46.50', change: '+2.65%', pe: '11.5', pb: '1.5', margin: '+22%', clicks3Days: 360 },
-            { symbol: 'PVT', name: 'Vận tải Dầu khí', price: '18.30', change: '+0.83%', pe: '12.0', pb: '1.0', margin: '+25%', clicks3Days: 345 },
-            { symbol: 'DCM', name: 'Phân bón Dầu khí Cà Mau', price: '30.70', change: '-1.76%', pe: '14.5', pb: '1.8', margin: '+20%', clicks3Days: 340 },
-            { symbol: 'DPM', name: 'Đạm Phú Mỹ', price: '23.55', change: '+0.43%', pe: '13.2', pb: '1.2', margin: '+22%', clicks3Days: 330 },
-            { symbol: 'VHC', name: 'Thủy sản Vĩnh Hoàn', price: '52.60', change: '-2.77%', pe: '15.0', pb: '1.9', margin: '+21%', clicks3Days: 315 },
-            { symbol: 'PC1', name: 'Tập đoàn PC1', price: '21.40', change: '-1.15%', pe: '16.2', pb: '1.3', margin: '+30%', clicks3Days: 310 },
-            { symbol: 'VCB', name: 'Ngân hàng Ngoại thương', price: '59.30', change: '+4.96%', pe: '11.2', pb: '2.5', margin: '+18%', clicks3Days: 290 },
-            { symbol: 'BID', name: 'Ngân hàng Đầu tư và Phát triển', price: '38.00', change: '+2.01%', pe: '12.1', pb: '1.6', margin: '+17%', clicks3Days: 280 },
-            { symbol: 'FPT', name: 'Tập đoàn FPT', price: '67.00', change: '+0.15%', pe: '24.2', pb: '4.2', margin: '+19%', clicks3Days: 260 },
-            { symbol: 'PET', name: 'Dịch vụ Tổng hợp Dầu khí', price: '38.00', change: '+0.00%', pe: '15.0', pb: '1.4', margin: '+21%', clicks3Days: 210 },
-            { symbol: 'ACV', name: 'Tổng Công ty Cảng Hàng không', price: '39.20', change: '+0.00%', pe: '24.5', pb: '3.1', margin: '+18%', clicks3Days: 195 }
+            { symbol: 'FPT', name: 'Tập đoàn FPT', price: 67.10, change: '+0.15%', pe: '24.2', pb: '4.2', margin: '+19%' },
+            { symbol: 'HPG', name: 'Tập đoàn Hòa Phát', price: 21.70, change: '+1.40%', pe: '13.5', pb: '1.4', margin: '+25%' },
+            { symbol: 'MWG', name: 'Thế Giới Di Động', price: 69.90, change: '+1.20%', pe: '18.4', pb: '2.5', margin: '+20%' },
+            { symbol: 'TCB', name: 'Techcombank', price: 28.95, change: '+1.80%', pe: '10.2', pb: '1.3', margin: '+22%' },
+            { symbol: 'MBB', name: 'Ngân hàng Quân Đội', price: 22.50, change: '+0.90%', pe: '8.5', pb: '1.2', margin: '+23%' },
+            { symbol: 'ACB', name: 'Ngân hàng Á Châu', price: 21.90, change: '+1.10%', pe: '8.2', pb: '1.5', margin: '+21%' },
+            { symbol: 'STB', name: 'Sacombank', price: 71.30, change: '+2.10%', pe: '12.8', pb: '1.8', margin: '+24%' },
+            { symbol: 'SSI', name: 'Chứng khoán SSI', price: 23.55, change: '-1.05%', pe: '19.5', pb: '2.0', margin: '+18%' },
+            { symbol: 'MSN', name: 'Masan Group', price: 66.10, change: '-0.75%', pe: '22.1', pb: '2.4', margin: '+19%' },
+            { symbol: 'CTG', name: 'VietinBank', price: 30.80, change: '+1.50%', pe: '10.5', pb: '1.4', margin: '+20%' },
+            { symbol: 'GAS', name: 'PV GAS', price: 68.60, change: '+0.50%', pe: '16.4', pb: '2.3', margin: '+18%' },
+            { symbol: 'BSR', name: 'Lọc hóa dầu Bình Sơn', price: 25.35, change: '+1.10%', pe: '11.0', pb: '1.1', margin: '+26%' },
+            { symbol: 'GVR', name: 'Tập đoàn Công nghiệp Cao su', price: 27.50, change: '+0.80%', pe: '18.2', pb: '1.7', margin: '+19%' },
+            { symbol: 'HDB', name: 'HDBank', price: 25.20, change: '+1.25%', pe: '9.1', pb: '1.6', margin: '+22%' },
+            { symbol: 'LPB', name: 'LienVietPostBank', price: 51.80, change: '+1.90%', pe: '14.0', pb: '2.1', margin: '+20%' },
+            { symbol: 'MCH', name: 'Hàng tiêu dùng Masan', price: 141.00, change: '+2.50%', pe: '20.5', pb: '4.5', margin: '+16%' },
+            { symbol: 'SAB', name: 'Sabeco', price: 43.55, change: '-0.40%', pe: '17.8', pb: '2.8', margin: '+17%' },
+            { symbol: 'SHB', name: 'SHB', price: 11.50, change: '+0.60%', pe: '7.5', pb: '0.9', margin: '+25%' },
+            { symbol: 'SSB', name: 'SeABank', price: 15.55, change: '+0.80%', pe: '15.2', pb: '1.5', margin: '+18%' },
+            { symbol: 'PVC', name: 'Hóa chất Dầu khí', price: 11.80, change: '+1.10%', pe: '11.5', pb: '0.8', margin: '+24%' },
+            { symbol: 'DCM', name: 'Phân bón Dầu khí Cà Mau', price: 30.70, change: '+0.40%', pe: '12.4', pb: '1.6', margin: '+21%' },
+            { symbol: 'DPM', name: 'Phân bón Đạm Phú Mỹ', price: 22.05, change: '+0.60%', pe: '12.0', pb: '1.5', margin: '+20%' },
+            { symbol: 'REE', name: 'Cơ Điện Lạnh', price: 46.50, change: '+0.80%', pe: '12.0', pb: '1.5', margin: '+19%' },
+            { symbol: 'PVT', name: 'Vận tải Dầu khí', price: 18.30, change: '+1.10%', pe: '10.1', pb: '1.0', margin: '+23%' },
+            { symbol: 'PVS', name: 'DV Kỹ thuật Dầu khí', price: 34.10, change: '-2.01%', pe: '9.2', pb: '1.1', margin: '+25%' },
+            { symbol: 'PVD', name: 'Khoan Dầu khí', price: 18.15, change: '-1.20%', pe: '14.2', pb: '0.9', margin: '+28%' },
+            { symbol: 'PDR', name: 'Bất động sản Phát Đạt', price: 11.45, change: '+2.20%', pe: '18.4', pb: '1.8', margin: '+22%' },
+            { symbol: 'ANV', name: 'Thủy sản Nam Việt', price: 17.05, change: '+1.50%', pe: '15.1', pb: '1.3', margin: '+20%' },
+            { symbol: 'PHR', name: 'Cao su Phước Hòa', price: 48.20, change: '+1.30%', pe: '13.8', pb: '1.7', margin: '+20%' },
+            { symbol: 'ACV', name: 'Tổng Cảng Hàng Không VN', price: 115.00, change: '+1.80%', pe: '22.0', pb: '3.1', margin: '+15%' },
+            { symbol: 'BID', name: 'BIDV', price: 38.00, change: '+2.01%', pe: '12.1', pb: '1.6', margin: '+17%' },
+            { symbol: 'VCB', name: 'Vietcombank', price: 59.30, change: '+1.20%', pe: '13.2', pb: '2.5', margin: '+18%' },
+            { symbol: 'VHM', name: 'Vinhomes', price: 148.10, change: '+1.80%', pe: '11.5', pb: '1.9', margin: '+22%' },
+            { symbol: 'VIB', name: 'VIB', price: 14.50, change: '+0.70%', pe: '8.8', pb: '1.3', margin: '+21%' },
+            { symbol: 'VIC', name: 'Vingroup', price: 214.10, change: '+2.10%', pe: '25.0', pb: '2.1', margin: '+16%' },
+            { symbol: 'VJC', name: 'Vietjet Air', price: 125.00, change: '+1.10%', pe: '20.5', pb: '3.0', margin: '+17%' },
+            { symbol: 'VNM', name: 'Vinamilk', price: 60.90, change: '+0.50%', pe: '17.2', pb: '3.5', margin: '+19%' },
+            { symbol: 'VPB', name: 'VPBank', price: 24.80, change: '+0.90%', pe: '10.8', pb: '1.2', margin: '+23%' },
+            { symbol: 'VRE', name: 'Vincom Retail', price: 24.80, change: '+0.80%', pe: '14.5', pb: '1.4', margin: '+20%' }
         ];
 
         const signals24hMoneyData = [
-            { symbol: 'PVS', type: 'Áp lực điều chỉnh', desc: 'Giá lùi về vùng 34.10, thanh khoản thấp, dòng tiền đang quan sát vùng hỗ trợ.', color: 'text-amber-400', border: 'border-amber-500/30' },
-            { symbol: 'PVD', type: 'Kiểm định đáy', desc: 'Giá điều chỉnh về 18.15 (-3.97%), lực cầu bắt đáy bắt đầu xuất hiện quanh vùng giá thấp.', color: 'text-rose-400', border: 'border-rose-500/30' },
-            { symbol: 'REE', type: 'Bứt phá tích cực', desc: 'Lực cầu khỏe đẩy giá tăng lên 46.50 (+2.65%), dòng tiền trung hạn duy trì ổn định.', color: 'text-emerald-400', border: 'border-emerald-500/30' },
-            { symbol: 'VCB', type: 'Dòng tiền trụ', desc: 'Dẫn dắt đà tăng mạnh mẽ với mức tăng +4.96% tại giá 59.30, hỗ trợ điểm số chung.', color: 'text-emerald-400', border: 'border-emerald-500/30' },
-            { symbol: 'PDR', type: 'Vận động tích lũy', desc: 'Giao dịch quanh mức 11.45 (-3.38%), biên độ hẹp chờ xác nhận xu hướng mới.', color: 'text-sky-400', border: 'border-sky-500/30' }
+            { symbol: 'FPT', type: 'Dòng tiền công nghệ', desc: 'Dẫn dắt đà tăng với giá ổn định, khối lượng giao dịch tốt, xu hướng trung hạn tích cực.', color: 'text-emerald-400', border: 'border-emerald-500/30' },
+            { symbol: 'VCB', type: 'Trụ ngân hàng', desc: 'Vận động tích cực tại vùng giá tham chiếu, giữ nhịp ổn định cho chỉ số chung.', color: 'text-emerald-400', border: 'border-emerald-500/30' },
+            { symbol: 'VHM', type: 'Bất động sản lớn', desc: 'Dòng tiền quan tâm nhóm vốn hóa lớn, biên độ giá duy trì tích cực.', color: 'text-sky-400', border: 'border-sky-500/30' },
+            { symbol: 'PVD', type: 'Khoan dầu khí', desc: 'Giàn khoan hoạt động hết công suất, kỳ vọng kết quả kinh doanh phục hồi tích cực.', color: 'text-amber-400', border: 'border-amber-500/30' }
         ];
 
         const stockDetailsMap = {
-            'PVS': {
-                fireantUrl: 'https://fireant.vn/ma-chung-khoan/PVS',
-                title: 'Đánh giá PVS: Sóng hạ tầng Dầu khí & Năng lượng tái tạo ngoài khơi',
-                sportline: 'Khối lượng hàng hóa tăng lên khi giá điều chỉnh; Giá trị doanh nghiệp bùng nổ năng lượng cốt lõi.',
-                valuation: 'Vùng giá 34.10 phản ánh kỳ vọng trúng thầu các dự án lớn với biên an toàn +25%.',
-                rsi: '52.4 (Trung lập)', rsiColor: 'text-amber-400',
-                macd: 'Tiếp cận đường Signal', macdColor: 'text-amber-400',
-                pa: 'Kiểm định lại hỗ trợ nền giá ngắn hạn', paColor: 'text-sky-400',
-                action: 'Quan sát nhịp tích lũy, cân nhắc giải ngân thăm dò khi giá ổn định.'
+            'FPT': {
+                fireantUrl: 'https://fireant.vn/ma-chung-khoan/FPT',
+                title: 'Đánh giá FPT: Động lực tăng trưởng từ Khối Công nghệ & Chuyển đổi số toàn cầu',
+                sportline: 'Khối lượng hàng hóa mở rộng song hành cùng giá trị nội tại doanh nghiệp bùng nổ.',
+                valuation: 'Mức giá giao dịch hoàn toàn tương xứng với tốc độ tăng trưởng lợi nhuận đều đặn.',
+                rsi: '61.2 (Khỏe)', rsiColor: 'text-emerald-400',
+                macd: 'Cắt lên đường Signal tích cực', macdColor: 'text-emerald-400',
+                pa: 'Breakout thành công vùng tích lũy ngắn hạn', paColor: 'text-emerald-400',
+                action: 'Tiếp tục nắm giữ, canh nhịp rung lắc để gia tăng tỷ trọng.'
             },
-            'PVD': {
-                fireantUrl: 'https://fireant.vn/ma-chung-khoan/PVD',
-                title: 'Đánh giá PVD: Động lực từ đơn giá cho thuê giàn khoan quốc tế',
-                sportline: 'Hiệu suất khai thác giàn khoan tối đa tối ưu hóa giá trị doanh nghiệp.',
-                valuation: 'Định giá hấp dẫn tại 18.15 với biên an toàn +28%.',
-                rsi: '44.1 (Thận trọng)', rsiColor: 'text-amber-400',
-                macd: 'Áp lực điều chỉnh ngắn hạn', macdColor: 'text-rose-400',
-                pa: 'Test vùng hỗ trợ đáy trước', paColor: 'text-rose-400',
-                action: 'Chờ tín hiệu dòng tiền lớn xác nhận đảo chiều trước khi gia tăng tỷ trọng.'
+            'VCB': {
+                fireantUrl: 'https://fireant.vn/ma-chung-khoan/VCB',
+                title: 'Đánh giá VCB: Vị thế dẫn đầu hệ thống ngân hàng về chất lượng tín dụng',
+                sportline: 'Giá trị doanh nghiệp bùng nổ dựa trên nền tảng quản trị rủi ro vững chắc.',
+                valuation: 'Vùng giá phản ánh đúng định giá premium của ngân hàng đầu ngành.',
+                rsi: '58.5 (Tích cực)', rsiColor: 'text-emerald-400',
+                macd: 'Duy trì xu hướng tăng trung hạn', macdColor: 'text-emerald-400',
+                pa: 'Tích lũy ổn định trên các đường MA lớn', paColor: 'text-emerald-400',
+                action: 'Nắm giữ dài hạn, tích lũy thêm khi có nhịp điều chỉnh nhẹ.'
             },
-            'REE': {
-                fireantUrl: 'https://fireant.vn/ma-chung-khoan/REE',
-                title: 'Đánh giá REE: Tăng trưởng bền vững từ Điện nước & Bất động sản văn phòng',
-                sportline: 'Danh mục tài sản cơ sở hạ tầng cốt lõi mang lại dòng tiền đều đặn.',
-                valuation: 'Mức giá 46.50 phản ánh nền tảng cơ bản vững chắc.',
-                rsi: '65.1 (Khỏe)', rsiColor: 'text-emerald-400',
-                macd: 'Hướng lên mạnh mẽ', macdColor: 'text-emerald-400',
-                pa: 'Breakout vùng tích lũy ngắn hạn thành công', paColor: 'text-emerald-400',
-                action: 'Tiếp tục nắm giữ, canh gia tăng khi cổ phiếu rung lắc tích lũy.'
-            },
-            'PVC': {
-                fireantUrl: 'https://fireant.vn/ma-chung-khoan/PVC',
-                title: 'Đánh giá PVC: Dấu ấn từ dịch vụ hóa chất chuyên dụng dầu khí',
-                sportline: 'Hoạt động khoan thăm dò mở rộng tạo tiền đề gia tăng doanh thu dịch vụ.',
-                valuation: 'Giao dịch tại 11.80, phù hợp với dòng tiền đầu cơ nhạy bén.',
-                rsi: '45.0 (Tích lũy)', rsiColor: 'text-amber-400',
-                macd: 'Đi ngang biên độ hẹp', macdColor: 'text-amber-400',
-                pa: 'Dao động tích lũy trong kênh giá', paColor: 'text-sky-400',
-                action: 'Giao dịch tỷ trọng vừa phải, ưu tiên quản trị rủi ro ngắn hạn.'
-            },
-            'ANV': {
-                fireantUrl: 'https://fireant.vn/ma-chung-khoan/ANV',
-                title: 'Đánh giá ANV: Triển vọng phục hồi xuất khẩu thủy sản',
-                sportline: 'Đơn hàng xuất khẩu phục hồi giúp tối ưu hóa biên lợi nhuận gộp.',
-                valuation: 'Định giá ở mức 17.05 với kỳ vọng cải thiện kết quả kinh doanh.',
-                rsi: '42.5 (Thận trọng)', rsiColor: 'text-amber-400',
-                macd: 'Áp lực điều chỉnh', macdColor: 'text-rose-400',
-                pa: 'Test lại vùng hỗ trợ dưới', paColor: 'text-rose-400',
-                action: 'Kiên nhẫn chờ tín hiệu dòng tiền bắt đáy tham gia rõ nét hơn.'
-            },
-            'PDR': {
-                fireantUrl: 'https://fireant.vn/ma-chung-khoan/PDR',
-                title: 'Đánh giá PDR: Tiềm năng phục hồi từ các dự án trọng điểm',
-                sportline: 'Thanh khoản thị trường bất động sản cải thiện thúc đẩy dòng tiền đầu cơ.',
-                valuation: 'Vùng giá 11.45 mở ra biên độ chiết khấu hấp dẫn cho trung hạn.',
-                rsi: '46.8 (Cân bằng)', rsiColor: 'text-amber-400',
-                macd: 'Tích lũy tạo đáy', macdColor: 'text-amber-400',
-                pa: 'Xây nền giá tích lũy quanh hỗ trợ', paColor: 'text-sky-400',
-                action: 'Theo dõi sát khối lượng giao dịch đột biến để giải ngân thăm dò.'
+            'VHM': {
+                fireantUrl: 'https://fireant.vn/ma-chung-khoan/VHM',
+                title: 'Đánh giá VHM: Tiềm năng từ quỹ đất lớn và các dự án đại đô thị trọng điểm',
+                sportline: 'Sức mua và dòng tiền lớn kích hoạt sự bùng nổ năng lượng của cổ phiếu bất động sản.',
+                valuation: 'Mức giá mở ra biên an toàn cho chu kỳ bàn giao dự án mới.',
+                rsi: '54.2 (Trung lập tích cực)', rsiColor: 'text-amber-400',
+                macd: 'Cân bằng, hướng lên', macdColor: 'text-emerald-400',
+                pa: 'Breakout khỏi kênh tích lũy trung hạn', macdColor: 'text-emerald-400',
+                action: 'Canh giải ngân tỷ trọng vừa phải ở các nhịp test nền giá.'
             }
         };
 
-        function getTop10ClickedStocks() {
-            return [...allStockDatabase]
-                .sort((a, b) => b.clicks3Days - a.clicks3Days)
-                .slice(0, 10);
+        function toggleFavorite(event, symbol) {
+            event.stopPropagation();
+            const index = favoriteStocks.indexOf(symbol);
+            if (index > -1) {
+                favoriteStocks.splice(index, 1);
+            } else {
+                favoriteStocks.push(symbol);
+            }
+            localStorage.setItem('fav_stocks', JSON.stringify(favoriteStocks));
+            renderStockCards();
         }
 
         function renderStockCards() {
             const listEl = document.getElementById('stock-list');
-            const top10 = getTop10ClickedStocks();
-
-            listEl.innerHTML = top10.map((s, idx) => {
+            
+            const sortedDatabase = [...allStockDatabase].sort((a, b) => {
+                const aFav = favoriteStocks.includes(a.symbol) ? 1 : 0;
+                const bFav = favoriteStocks.includes(b.symbol) ? 1 : 0;
+                return bFav - aFav;
+            });
+            
+            listEl.innerHTML = sortedDatabase.map((s, idx) => {
                 const isPositive = s.change.startsWith('+');
                 const changeColor = isPositive ? 'text-emerald-400' : (s.change.startsWith('-') ? 'text-rose-400' : 'text-slate-400');
-                const rankBadge = idx < 3 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800';
+                const isFav = favoriteStocks.includes(s.symbol);
+                const starColor = isFav ? 'text-amber-400 fa-solid' : 'text-slate-600 fa-regular';
 
                 return `
-                    <div id="card-${s.symbol}" onclick="handleClickStock('${s.symbol}')" class="stock-card bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 p-2.5 rounded-lg transition cursor-pointer">
-                        <div class="flex justify-between items-start">
+                    <div id="card-${s.symbol}" onclick="handleClickStock('${s.symbol}')" class="stock-card bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 p-3 rounded-lg transition cursor-pointer">
+                        <div class="flex justify-between items-center">
                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-mono px-1.5 py-0.2 rounded border ${rankBadge}">#${idx + 1}</span>
-                                <div>
-                                    <span class="text-sm font-black text-amber-400">${s.symbol}</span>
-                                    <span class="text-[10px] text-slate-400 block">${s.name}</span>
-                                </div>
+                                <span class="text-[11px] font-mono px-1.5 py-0.5 rounded border bg-slate-950 text-slate-400 border-slate-800">#${idx + 1}</span>
+                                <span class="text-sm font-black text-amber-400">${s.symbol}</span>
+                                <button onclick="toggleFavorite(event, '${s.symbol}')" title="Stick ưu tiên" class="text-sm px-1 transition hover:scale-125">
+                                    <i class="${starColor} fa-star text-xs"></i>
+                                </button>
+                                <span class="text-xs text-slate-300 truncate max-w-[100px] md:max-w-[140px] ml-1 font-medium">${s.name}</span>
                             </div>
-                            <div class="text-right">
-                                <span class="text-sm font-bold ${changeColor}">${s.price}</span>
-                                <span class="text-[10px] ${changeColor} block">${s.change}</span>
+                            <div class="text-right flex items-center gap-3">
+                                <span id="price-${s.symbol}" class="text-sm font-bold ${changeColor}">${s.price.toFixed(2)}</span>
+                                <span id="change-${s.symbol}" class="text-xs font-semibold ${changeColor} w-14 text-right">${s.change}</span>
                             </div>
-                        </div>
-                        <div class="mt-1.5 text-[9px] text-slate-400 flex justify-between border-t border-slate-800/80 pt-1">
-                            <span>Lượt click: <strong class="text-amber-300">${s.clicks3Days}</strong></span>
-                            <span class="text-emerald-400 font-medium">Margin: ${s.margin}</span>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
+        // CƠ CHẾ AUTO-UPDATE REALTIME MỖI 4 GIÂY
+        function initRealtimePriceSimulator() {
+            setInterval(() => {
+                const count = Math.floor(Math.random() * 3) + 2;
+                for (let i = 0; i < count; i++) {
+                    const randomIndex = Math.floor(Math.random() * allStockDatabase.length);
+                    const stock = allStockDatabase[randomIndex];
+                    
+                    const fluctuation = (Math.random() * 0.6 - 0.28);
+                    stock.price = Math.max(5, stock.price + fluctuation);
+                    
+                    const changeVal = (Math.random() * 2 - 0.9).toFixed(2);
+                    stock.change = (changeVal >= 0 ? '+' : '') + changeVal + '%';
+
+                    const priceEl = document.getElementById(`price-${stock.symbol}`);
+                    const changeEl = document.getElementById(`change-${stock.symbol}`);
+                    const cardEl = document.getElementById(`card-${stock.symbol}`);
+
+                    if (priceEl && changeEl && cardEl) {
+                        const isPositive = stock.change.startsWith('+');
+                        const newColor = isPositive ? 'text-emerald-400' : 'text-rose-400';
+                        
+                        priceEl.innerText = stock.price.toFixed(2);
+                        priceEl.className = `text-sm font-bold ${newColor}`;
+                        
+                        changeEl.innerText = stock.change;
+                        changeEl.className = `text-xs font-semibold ${newColor} w-14 text-right`;
+
+                        cardEl.classList.add('price-updated');
+                        setTimeout(() => cardEl.classList.remove('price-updated'), 1000);
+                    }
+                }
+            }, 4000);
+        }
+
         function handleClickStock(symbol) {
-            const stock = allStockDatabase.find(item => item.symbol === symbol);
-            if (stock) stock.clicks3Days += 1;
-            
-            renderStockCards();
             selectStock(symbol);
         }
 
@@ -390,7 +433,7 @@
                 text: `Cập nhật realtime tin tức mới nhất [Bài ${i + 1}] liên quan đến triển vọng mã ${symbol}.`,
                 source: i % 2 === 0 ? '24hMoney' : 'FireAnt',
                 link: `https://24hmoney.vn/phan-tich-ky-thuat?utm_medium=box_header2`,
-                time: `${(i + 1) * 6} phút trước`
+                time: `${(i + 1) * 5} phút trước`
             }));
 
             container.innerHTML = newsList.map((item, idx) => `
@@ -412,13 +455,14 @@
             const selectedCard = document.getElementById(`card-${symbol}`);
             if(selectedCard) selectedCard.classList.add('active-stock');
 
+            const stockInfo = allStockDatabase.find(s => s.symbol === symbol);
             const details = stockDetailsMap[symbol] || {
                 fireantUrl: `https://fireant.vn/ma-chung-khoan/${symbol}`,
-                title: `Đánh giá chi tiết mã ${symbol}`,
+                title: `Đánh giá chi tiết mã ${symbol} (Giá hiện tại: ${stockInfo ? stockInfo.price.toFixed(2) : '--'})`,
                 sportline: 'Khối lượng hàng hóa tăng lên khi mức giá của một sản phẩm bị giảm xuống.',
-                valuation: `Vùng giá hiện tại của ${symbol} mở ra cơ hội theo dõi tích lũy dài hạn.`,
-                rsi: '50.0 (Trung lập)', rsiColor: 'text-amber-400',
-                macd: 'Đang duy trì cân bằng', macdColor: 'text-amber-400',
+                valuation: `Vùng giá hiện tại của ${symbol} mở ra cơ hội theo dõi tích lũy và định giá dài hạn.`,
+                rsi: '51.5 (Trung lập)', rsiColor: 'text-amber-400',
+                macd: 'Đang duy trì trạng thái cân bằng', macdColor: 'text-amber-400',
                 pa: 'Theo dõi phản ứng tại mốc kháng cự/hỗ trợ gần nhất', paColor: 'text-sky-400',
                 action: 'Quan sát dòng tiền xác nhận trước khi gia tăng vị thế.'
             };
@@ -456,7 +500,8 @@
         window.addEventListener('DOMContentLoaded', () => {
             renderStockCards();
             render24hMoneySignals();
-            selectStock('PVS');
+            selectStock('FPT');
+            initRealtimePriceSimulator();
         });
     </script>
 </body>
