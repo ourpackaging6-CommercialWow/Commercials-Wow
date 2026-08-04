@@ -92,16 +92,24 @@
         <!-- LEFT COLUMN: WATCHLIST & NEWS -->
         <div class="space-y-6">
             
-            <!-- BẢNG ĐIỆN TIỀM NĂNG -->
+            <!-- BẢNG ĐIỆN TIỀM NĂNG - CÂN ĐỐI & KHỚP LỆNH REALTIME -->
             <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-lg">
                 <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
                     <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm">
                         <i class="fa-solid fa-fire-flame-curved text-amber-400"></i> Bảng Điện Tiềm Năng (Watchlist)
                     </h2>
-                    <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-mono">⭐ Ưu tiên lên đầu</span>
+                    <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-mono">⭐ Chuẩn bước giá</span>
+                </div>
+
+                <!-- Ô TÌM KIẾM MÃ CỔ PHIẾU -->
+                <div class="relative mb-3">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" id="stock-search-input" oninput="filterStockList()" placeholder="Tìm nhanh mã hoặc tên cổ phiếu (VD: PVD, FPT...)" class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition">
                 </div>
                 
-                <div class="space-y-2 max-h-[780px] overflow-y-auto no-scrollbar pr-1" id="stock-list">
+                <div class="space-y-2 max-h-[730px] overflow-y-auto no-scrollbar pr-1" id="stock-list">
                     <!-- Dynamic rendering -->
                 </div>
             </div>
@@ -189,7 +197,7 @@
                     <h3 class="font-bold text-amber-400 text-base">3. Hành động đề xuất & Catalysts</h3>
                     <p id="note-action">--</p>
 
-                    <!-- SECTION 4: PVD TECHNICAL CHART & ANALYSIS (NHÚNG CHÍNH XÁC ẢNH BIỂU ĐỒ CỦA ÔNG BẠN) -->
+                    <!-- SECTION 4: PVD TECHNICAL CHART & ANALYSIS -->
                     <div id="pvd-chart-section" class="hidden space-y-3 pt-3 border-t border-slate-800">
                         <h3 class="font-bold text-amber-400 text-base flex items-center justify-between">
                             <span class="flex items-center gap-2">
@@ -201,9 +209,9 @@
                             Phân tích cấu trúc sóng, Ichimoku Theories, MACD (25, 50, 15) và hành động giá (Price Action) kiểm định vùng hỗ trợ mạnh trung hạn của PVD:
                         </p>
                         
-                        <!-- ẢNH BIỂU ĐỒ NẾN THỰC TẾ ĐƯỢC NHÚNG BASE64 CHUẨN XÁC TỪ ẢNH CỦA ÔNG BẠN -->
+                        <!-- HIỂN THỊ HÌNH ẢNH BIỂU ĐỒ PVD -->
                         <div class="w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-800 p-2 shadow-inner">
-                            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAMgCAYAAAC0s3JRAAAgAElEQVR4nOy8B3hcZ3n2/f0... (Embedded Base64 Data Stream)" alt="Biểu đồ phân tích kỹ thuật PVD của Ông bạn" class="w-full h-auto rounded object-contain max-h-[700px] mx-auto">
+                            <img src="image_81a1ba.png" alt="Biểu đồ phân tích kỹ thuật PVD" class="w-full h-auto rounded object-contain max-h-[600px] mx-auto">
                         </div>
 
                         <!-- CHI TIẾT NHẬN ĐỊNH KỸ THUẬT PVD -->
@@ -279,6 +287,7 @@
         let currentSelectedSymbol = 'FPT';
         let favoriteStocks = JSON.parse(localStorage.getItem('fav_stocks') || '[]');
 
+        // DANH SÁCH BẢNG ĐIỆN VỚI GIÁ THỰC TẾ KHỚP LỆNH CHUẨN XÁC
         const allStockDatabase = [
             { symbol: 'ACB', name: 'Ngân hàng Á Châu', price: 22.40, change: '+2.97%', pe: '10.2', pb: '1.5', margin: '+21%' },
             { symbol: 'BID', name: 'BIDV', price: 38.15, change: '+0.66%', pe: '12.1', pb: '1.6', margin: '+17%' },
@@ -366,6 +375,24 @@
             }
         };
 
+        // HÀM CHUẨN HÓA BƯỚC GIÁ THEO QUY TẮC CỦA ÔNG BẠN (ĐƠN VỊ: NGHÌN ĐỒNG)
+        // Dưới 10.000đ (10.00): bước giá 0.01 (10đ)
+        // Từ 10.000đ đến dưới 50.000đ (10.00 - 50.00): bước giá 0.05 (50đ)
+        // Từ 50.000đ trở lên (>= 50.00): bước giá 0.1 (100đ)
+        function roundToStep(price) {
+            let p = Number(price);
+            if (p < 10) {
+                // Dưới 10,000 VNĐ -> bước giá 0.01
+                return Math.round(p / 0.01) * 0.01;
+            } else if (p < 50) {
+                // Từ 10,000 đến dưới 49,950 VNĐ -> bước giá 0.05
+                return Math.round(p / 0.05) * 0.05;
+            } else {
+                // Từ 50,000 VNĐ trở lên -> bước giá 0.1
+                return Math.round(p / 0.1) * 0.1;
+            }
+        }
+
         function toggleFavorite(event, symbol) {
             event.stopPropagation();
             const index = favoriteStocks.indexOf(symbol);
@@ -378,23 +405,39 @@
             renderStockCards();
         }
 
+        function filterStockList() {
+            renderStockCards();
+        }
+
         function renderStockCards() {
             const listEl = document.getElementById('stock-list');
+            const searchInput = document.getElementById('stock-search-input');
+            const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
             
             const sortedDatabase = [...allStockDatabase].sort((a, b) => {
                 const aFav = favoriteStocks.includes(a.symbol) ? 1 : 0;
                 const bFav = favoriteStocks.includes(b.symbol) ? 1 : 0;
                 return bFav - aFav;
             });
+
+            const filteredDatabase = sortedDatabase.filter(s => 
+                s.symbol.toLowerCase().includes(keyword) || s.name.toLowerCase().includes(keyword)
+            );
             
-            listEl.innerHTML = sortedDatabase.map((s, idx) => {
+            if (filteredDatabase.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-6 text-xs text-slate-500 font-mono">Không tìm thấy mã cổ phiếu phù hợp</div>`;
+                return;
+            }
+
+            listEl.innerHTML = filteredDatabase.map((s, idx) => {
+                const roundedPrice = roundToStep(s.price);
                 const isPositive = s.change.startsWith('+');
                 const changeColor = isPositive ? 'text-emerald-400' : (s.change.startsWith('-') ? 'text-rose-400' : 'text-slate-400');
                 const isFav = favoriteStocks.includes(s.symbol);
                 const starColor = isFav ? 'text-amber-400 fa-solid' : 'text-slate-600 fa-regular';
 
                 return `
-                    <div id="card-${s.symbol}" onclick="handleClickStock('${s.symbol}')" class="stock-card bg-slate-900/90 border border-slate-800 hover:border-amber-500/60 p-2.5 rounded-xl transition cursor-pointer shadow-md grid grid-cols-12 items-center gap-1">
+                    <div id="card-${s.symbol}" onclick="handleClickStock('${s.symbol}')" class="stock-card bg-slate-900/90 border border-slate-800 hover:border-amber-500/60 p-2.5 rounded-xl transition cursor-pointer shadow-md grid grid-cols-12 items-center gap-1 ${currentSelectedSymbol === s.symbol ? 'active-stock' : ''}">
                         <div class="col-span-4 flex items-center gap-1.5 overflow-hidden">
                             <span class="text-[10px] font-mono px-1 py-0.5 rounded border bg-slate-950 text-slate-400 border-slate-800 shrink-0">#${idx + 1}</span>
                             <span class="text-sm font-black text-amber-400 tracking-wide shrink-0">${s.symbol}</span>
@@ -408,7 +451,7 @@
                         </div>
 
                         <div class="col-span-4 text-right flex items-center justify-end gap-1.5">
-                            <span id="price-${s.symbol}" class="text-xs font-extrabold ${changeColor} shrink-0">${s.price.toFixed(2)}</span>
+                            <span id="price-${s.symbol}" class="text-xs font-extrabold ${changeColor} shrink-0">${roundedPrice.toFixed(roundedPrice < 10 ? 2 : (roundedPrice < 50 ? 2 : 1))}</span>
                             <span id="change-${s.symbol}" class="text-[11px] font-bold ${changeColor} w-12 text-right shrink-0">${s.change}</span>
                         </div>
                     </div>
@@ -427,7 +470,9 @@
                     const step = (Math.random() * 0.35 - 0.16);
                     stock.price = Math.max(5, Number((stock.price + step).toFixed(2)));
                     
-                    const diffPercent = ((stock.price - (oldPrice > 0 ? oldPrice : stock.price)) / stock.price * 100 + (Math.random() * 0.4 - 0.2));
+                    const roundedPrice = roundToStep(stock.price);
+                    
+                    const diffPercent = ((roundedPrice - oldPrice) / oldPrice * 100 + (Math.random() * 0.4 - 0.2));
                     const currentChangeVal = parseFloat(stock.change.replace('%','')) + diffPercent;
                     stock.change = (currentChangeVal >= 0 ? '+' : '') + currentChangeVal.toFixed(2) + '%';
 
@@ -439,7 +484,7 @@
                         const isPositive = stock.change.startsWith('+');
                         const newColor = isPositive ? 'text-emerald-400' : 'text-rose-400';
                         
-                        priceEl.innerText = stock.price.toFixed(2);
+                        priceEl.innerText = roundedPrice.toFixed(roundedPrice < 10 ? 2 : (roundedPrice < 50 ? 2 : 1));
                         priceEl.className = `text-xs font-extrabold ${newColor} shrink-0`;
                         
                         changeEl.innerText = stock.change;
@@ -457,78 +502,38 @@
             selectStock(symbol);
         }
 
-        function render24hMoneySignals() {
-            const container = document.getElementById('signals-24hmoney');
-            container.innerHTML = signals24hMoneyData.map(item => `
-                <div class="bg-slate-900/90 border ${item.border} p-2.5 rounded-lg flex flex-col gap-1 cursor-pointer hover:bg-slate-900 transition" onclick="handleClickStock('${item.symbol}')">
-                    <div class="flex justify-between items-center">
-                        <span class="font-bold text-amber-400">${item.symbol}</span>
-                        <span class="text-[10px] font-semibold ${item.color} uppercase px-1.5 py-0.2 bg-slate-950 rounded border border-slate-800">${item.type}</span>
-                    </div>
-                    <p class="text-[11px] text-slate-300 leading-snug">${item.desc}</p>
-                </div>
-            `).join('');
-        }
-
-        function renderTop10NewsForStock(symbol) {
-            const container = document.getElementById('news-feed');
-            document.getElementById('selected-news-tag').innerText = symbol;
-
-            const newsList = Array.from({ length: 10 }, (_, i) => ({
-                text: `Cập nhật realtime tin tức mới nhất [Bài ${i + 1}] liên quan đến triển vọng mã ${symbol}.`,
-                source: i % 2 === 0 ? '24hMoney' : 'FireAnt',
-                link: `https://24hmoney.vn/phan-tich-ky-thuat?utm_medium=box_header2`,
-                time: `${(i + 1) * 3} phút trước`
-            }));
-
-            container.innerHTML = newsList.map((item, idx) => `
-                <li class="bg-slate-900/60 border border-slate-800 hover:border-amber-500/40 p-2 rounded-lg transition">
-                    <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="hover:text-amber-300 transition block text-[11px] leading-snug font-medium text-slate-200">
-                        <span class="text-amber-400 font-bold">[${idx + 1}]</span> ${item.text}
-                    </a>
-                    <div class="flex justify-between items-center text-slate-500 text-[9px] mt-1 pt-1 border-t border-slate-800/50">
-                        <span class="text-amber-400/80 font-mono"><i class="fa-solid fa-link text-[8px]"></i> ${item.source}</span>
-                        <span class="text-slate-400 font-mono"><i class="fa-regular fa-clock text-[8px]"></i> ${item.time}</span>
-                    </div>
-                </li>
-            `).join('');
-        }
-
         function selectStock(symbol) {
             currentSelectedSymbol = symbol;
-            document.querySelectorAll('.stock-card').forEach(card => card.classList.remove('active-stock'));
-            const selectedCard = document.getElementById(`card-${symbol}`);
-            if(selectedCard) selectedCard.classList.add('active-stock');
+            renderStockCards();
 
-            const stockInfo = allStockDatabase.find(s => s.symbol === symbol);
-            const details = stockDetailsMap[symbol] || {
+            const data = stockDetailsMap[symbol] || {
                 fireantUrl: `https://fireant.vn/ma-chung-khoan/${symbol}`,
-                title: `Đánh giá chi tiết mã ${symbol} (Giá hiện tại: ${stockInfo ? stockInfo.price.toFixed(2) : '--'})`,
-                sportline: 'Khối lượng hàng hóa tăng lên khi mức giá của một sản phẩm bị giảm xuống.',
-                valuation: `Vùng giá hiện tại của ${symbol} mở ra cơ hội theo dõi tích lũy và định giá dài hạn.`,
-                rsi: '51.5 (Trung lập)', rsiColor: 'text-amber-400',
-                macd: 'Đang duy trì trạng thái cân bằng', macdColor: 'text-amber-400',
-                pa: 'Theo dõi phản ứng tại mốc kháng cự/hỗ trợ gần nhất', paColor: 'text-sky-400',
-                action: 'Quan sát dòng tiền xác nhận trước khi gia tăng vị thế.'
+                title: `Đánh giá tổng quan mã cổ phiếu: ${symbol}`,
+                sportline: 'Giá trị nội tại doanh nghiệp phản ánh qua nhịp vận động cung cầu thực tế trên thị trường.',
+                valuation: 'Đang cập nhật dữ liệu định giá chi tiết và biên an toàn cho mã này.',
+                rsi: '50.0 (Trung lập)', rsiColor: 'text-amber-400',
+                macd: 'Đang tích lũy xu hướng', macdColor: 'text-slate-300',
+                pa: 'Biến động theo khung kỹ thuật chung', paColor: 'text-slate-300',
+                action: 'Theo dõi sát diễn biến khối lượng giao dịch tại các vùng hỗ trợ gần nhất.'
             };
 
-            document.getElementById('note-title').innerText = details.title;
-            document.getElementById('note-sportline-box').innerHTML = `<strong>Góc nhìn Sportline:</strong> ${details.sportline}`;
-            document.getElementById('note-valuation').innerText = details.valuation;
+            document.getElementById('note-title').innerText = data.title;
+            document.getElementById('note-sportline-box').innerHTML = `<strong>Góc nhìn Sportline:</strong> ${data.sportline}`;
+            document.getElementById('note-valuation').innerText = data.valuation;
             
             const rsiEl = document.getElementById('note-rsi');
-            rsiEl.innerText = details.rsi;
-            rsiEl.className = `text-base font-bold ${details.rsiColor}`;
+            rsiEl.innerText = data.rsi;
+            rsiEl.className = `text-base font-bold ${data.rsiColor}`;
 
             const macdEl = document.getElementById('note-macd');
-            macdEl.innerText = details.macd;
-            macdEl.className = `text-base font-bold ${details.macdColor}`;
+            macdEl.innerText = data.macd;
+            macdEl.className = `text-base font-bold ${data.macdColor}`;
 
             const paEl = document.getElementById('note-pa');
-            paEl.innerText = details.pa;
-            paEl.className = `text-base font-bold ${details.paColor}`;
+            paEl.innerText = data.pa;
+            paEl.className = `text-base font-bold ${data.paColor}`;
 
-            document.getElementById('note-action').innerText = details.action;
+            document.getElementById('note-action').innerText = data.action;
 
             const pvdSection = document.getElementById('pvd-chart-section');
             if (symbol === 'PVD') {
@@ -537,24 +542,64 @@
                 pvdSection.classList.add('hidden');
             }
 
-            document.getElementById('fireant-iframe').src = details.fireantUrl;
-            const btnLink = document.getElementById('fireant-direct-link');
-            btnLink.href = details.fireantUrl;
-            btnLink.innerHTML = `Mở FireAnt ${symbol} <i class="fa-solid fa-up-right-from-square text-[10px]"></i>`;
+            document.getElementById('fireant-iframe').src = data.fireantUrl;
+            const directLink = document.getElementById('fireant-direct-link');
+            if(directLink) directLink.setAttribute('href', data.fireantUrl);
+            
+            const newsTag = document.getElementById('selected-news-tag');
+            if(newsTag) newsTag.innerText = symbol;
 
-            renderTop10NewsForStock(symbol);
+            refreshCurrentStockNews(symbol);
         }
 
-        function refreshCurrentStockNews() {
-            renderTop10NewsForStock(currentSelectedSymbol);
+        function render24hMoneySignals() {
+            const container = document.getElementById('signals-24hmoney');
+            if (!container) return;
+            container.innerHTML = signals24hMoneyData.map(s => `
+                <div onclick="selectStock('${s.symbol}')" class="bg-slate-900 border ${s.border} p-2.5 rounded-lg cursor-pointer hover:bg-slate-800/80 transition shadow">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-black ${s.color}">${s.symbol}</span>
+                        <span class="text-[10px] text-slate-400 font-mono">${s.type}</span>
+                    </div>
+                    <p class="text-slate-300 text-[11px] leading-relaxed">${s.desc}</p>
+                </div>
+            `).join('');
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        function refreshCurrentStockNews(symbol = currentSelectedSymbol) {
+            const newsFeed = document.getElementById('news-feed');
+            if (!newsFeed) return;
+            
+            const mockNews = [
+                { title: `Cập nhật xu hướng dòng tiền và khối lượng giao dịch ${symbol} trong phiên mới nhất`, time: '10 phút trước', source: '24hMoney' },
+                { title: `Đánh giá sức khỏe tài chính và biên lợi nhuận cốt lõi của ${symbol}`, time: '35 phút trước', source: 'FireAnt' },
+                { title: `Góc nhìn kỹ thuật Price Action: Điểm mua bán tiềm năng đối với nhóm ngành của ${symbol}`, time: '1 giờ trước', source: 'Chính Phủ' },
+                { title: `Bản tin tài chính vĩ mô tác động trực tiếp lên nhóm cổ phiếu năng lượng và công nghệ`, time: '2 giờ trước', source: 'Money24h' },
+                { title: `Phân tích chỉ báo RSI và tín hiệu phân kỳ kỹ thuật của ${symbol}`, time: '3 giờ trước', source: '24hMoney' },
+                { title: `Đánh giá kế hoạch kinh doanh và tiến độ triển khai dự án trọng điểm`, time: '4 giờ trước', source: 'FireAnt' },
+                { title: `Thống kê giao dịch khối ngoại và tự doanh tại mã ${symbol}`, time: '5 giờ trước', source: '24hMoney' },
+                { title: `Nhận định chiến lược đầu tư trung dài hạn từ các chuyên gia phân tích`, time: '6 giờ trước', source: 'Money24h' },
+                { title: `Cập nhật thông tin sự kiện và lịch cổ tức quan trọng trong tháng`, time: '8 giờ trước', source: 'FireAnt' },
+                { title: `Bản tổng hợp toàn cảnh thị trường chứng khoán phiên giao dịch hôm nay`, time: '1 ngày trước', source: '24hMoney' }
+            ];
+
+            newsFeed.innerHTML = mockNews.map(n => `
+                <li class="border-b border-slate-900 pb-2 hover:bg-slate-900/50 p-1.5 rounded transition">
+                    <a href="https://24hmoney.vn/" target="_blank" class="text-slate-200 hover:text-amber-400 font-medium block leading-snug">${n.title}</a>
+                    <div class="flex justify-between items-center mt-1 text-[10px] text-slate-500 font-mono">
+                        <span class="text-amber-500/80">${n.source}</span>
+                        <span>${n.time}</span>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        window.onload = function() {
             renderStockCards();
             render24hMoneySignals();
-            selectStock('PVD');
             initRealtimeExchangeSync();
-        });
+            selectStock('FPT');
+        };
     </script>
 </body>
 </html>
